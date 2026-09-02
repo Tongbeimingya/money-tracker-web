@@ -118,6 +118,22 @@
       </div>
       <div class="setting-item">
         <div class="setting-info">
+          <span class="setting-label">导入数据</span>
+          <span class="setting-desc">从JSON文件导入记账数据（会覆盖现有数据）</span>
+        </div>
+        <div class="setting-action">
+          <input
+            ref="fileInput"
+            type="file"
+            accept=".json"
+            style="display: none"
+            @change="handleFileSelect"
+          />
+          <button class="setting-btn" @click="$refs.fileInput.click()">导入</button>
+        </div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
           <span class="setting-label">清空数据</span>
           <span class="setting-desc">删除所有记账数据（谨慎操作）</span>
         </div>
@@ -496,6 +512,55 @@ const exportData = () => {
     alert('数据导出成功！💾')
   } catch (error) {
     alert('导出失败，请重试')
+  }
+}
+
+// 文件输入引用
+const fileInput = ref(null)
+
+// 处理文件选择
+const handleFileSelect = (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    try {
+      const importedData = JSON.parse(e.target.result)
+      importData(importedData)
+    } catch (error) {
+      alert('文件格式错误，请选择正确的JSON文件')
+    }
+  }
+  reader.readAsText(file)
+
+  // 重置文件输入，允许重复选择同一文件
+  event.target.value = ''
+}
+
+// 导入数据
+const importData = (importedData) => {
+  if (!confirm('导入数据会覆盖当前所有数据，确定要继续吗？')) {
+    return
+  }
+
+  try {
+    // 验证数据结构
+    if (!importedData || typeof importedData !== 'object') {
+      throw new Error('数据格式错误')
+    }
+
+    // 保存导入的数据
+    localStorage.setItem('money-tracker-data', JSON.stringify(importedData))
+
+    alert('数据导入成功！页面即将刷新...')
+
+    // 刷新页面以重新加载数据
+    setTimeout(() => {
+      window.location.reload()
+    }, 500)
+  } catch (error) {
+    alert('导入失败：' + error.message)
   }
 }
 
