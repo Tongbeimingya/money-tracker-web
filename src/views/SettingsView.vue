@@ -97,7 +97,7 @@
           <span class="setting-desc">设置这个周期的生活费总额</span>
         </div>
         <div class="setting-action">
-          <button class="setting-btn" @click="showBudgetDialog = true">
+          <button class="setting-btn" @click="openBudgetDialog">
             ¥{{ currentPeriod?.totalTarget || 0 }}
           </button>
         </div>
@@ -394,6 +394,12 @@ const setStartNow = () => {
   const hours = String(now.getHours()).padStart(2, '0')
   const minutes = String(now.getMinutes()).padStart(2, '0')
   newPeriod.value.startDate = `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
+// 打开预算对话框
+const openBudgetDialog = () => {
+  budgetInput.value = currentPeriod.value?.totalTarget || 0
+  showBudgetDialog.value = true
 }
 
 // 确认修改预算
