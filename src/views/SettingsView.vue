@@ -556,7 +556,12 @@ const importData = (importedData) => {
       throw new Error('数据格式错误')
     }
 
-    // 保存导入的数据
+    // 验证必要字段
+    if (!importedData.periods || !Array.isArray(importedData.periods)) {
+      throw new Error('数据格式错误：缺少periods字段')
+    }
+
+    // 保存导入的数据到localStorage
     localStorage.setItem('money-tracker-data', JSON.stringify(importedData))
 
     alert('数据导入成功！页面即将刷新...')
@@ -567,6 +572,7 @@ const importData = (importedData) => {
     }, 500)
   } catch (error) {
     alert('导入失败：' + error.message)
+    console.error('导入错误：', error)
   }
 }
 
