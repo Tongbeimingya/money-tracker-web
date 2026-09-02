@@ -21,20 +21,20 @@
       </div>
       <div class="overview-grid">
         <div class="overview-item">
+          <span class="overview-label">本月目标</span>
+          <span class="overview-value income">¥{{ currentBudget?.totalTarget || 0 }}</span>
+        </div>
+        <div class="overview-item">
           <span class="overview-label">已分配</span>
-          <span class="overview-value income">¥{{ currentBudget?.totalReceived || 0 }}</span>
+          <span class="overview-value">¥{{ totalAllocated }}</span>
         </div>
         <div class="overview-item">
           <span class="overview-label">已花费</span>
           <span class="overview-value expense">¥{{ totalSpent }}</span>
         </div>
         <div class="overview-item">
-          <span class="overview-label">剩余</span>
+          <span class="overview-label">剩余可用</span>
           <span class="overview-value remaining">¥{{ remaining }}</span>
-        </div>
-        <div class="overview-item">
-          <span class="overview-label">使用率</span>
-          <span class="overview-value">{{ usageRate }}%</span>
         </div>
       </div>
     </div>
@@ -85,7 +85,7 @@
           <!-- 大分类进度条：只在收起时显示 -->
           <div v-if="!expandedGroups.has(group.id)" class="group-stat-progress">
             <BudgetProgress
-              :total-target="getGroupTotalBudget(group.id)"
+              :total-target="group.budget || 0"
               :total-received="getGroupTotalBudget(group.id)"
               :total-spent="getGroupTotalSpent(group.id)"
             />
@@ -265,6 +265,7 @@ const {
   currentExpenses,
   currentPeriod,
   totalSpent,
+  totalAllocated,
   loadData,
   getCategorySpent,
   getCategoriesByGroup,
@@ -287,16 +288,16 @@ const timeRanges = [
   { value: 'month', label: '月' }
 ]
 
-// 剩余金额
+// 剩余金额 = 本月目标 - 已花费
 const remaining = computed(() => {
   if (!currentBudget.value) return 0
-  return currentBudget.value.totalReceived - totalSpent.value
+  return (currentBudget.value.totalTarget || 0) - totalSpent.value
 })
 
-// 使用率
+// 使用率 = 已花费 / 本月目标
 const usageRate = computed(() => {
-  if (!currentBudget.value || currentBudget.value.totalReceived === 0) return 0
-  return Math.round((totalSpent.value / currentBudget.value.totalReceived) * 100)
+  if (!currentBudget.value || !currentBudget.value.totalTarget || currentBudget.value.totalTarget === 0) return 0
+  return Math.round((totalSpent.value / currentBudget.value.totalTarget) * 100)
 })
 
 // 切换大分类展开/收起
