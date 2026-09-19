@@ -244,7 +244,7 @@
           <div class="budget-info-section">
             <div class="info-row">
               <span class="info-label">已分配预算</span>
-              <span class="info-value">¥{{ totalAllocated.toFixed(2) }}</span>
+              <span class="info-value">¥{{ formatMoney(totalAllocated) }}</span>
             </div>
             <p class="form-hint">已分配金额由所有小分类预算自动计算</p>
           </div>
@@ -465,6 +465,7 @@ import CategoryGroupCard from '../components/CategoryGroupCard.vue'
 import EmptyState from '../components/EmptyState.vue'
 import IconPicker from '../components/IconPicker.vue'
 import ColorPicker from '../components/ColorPicker.vue'
+import { formatMoney } from '../utils/format'
 
 const emit = defineEmits(['viewCategory'])
 const storage = useStorage()

@@ -92,7 +92,7 @@
             </div>
           </div>
           <div class="expense-amount-wrapper">
-            <span class="expense-amount">¥{{ expense.amount }}</span>
+            <span class="expense-amount">¥{{ formatMoney(expense.amount) }}</span>
             <button class="delete-btn" @click="handleDelete(expense.id)">🗑️</button>
           </div>
         </div>
@@ -105,6 +105,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useStorage } from '../composables/useStorage'
 import EmptyState from '../components/EmptyState.vue'
+import { formatMoney } from '../utils/format'
 
 const props = defineProps({
   selectedCategoryId: {

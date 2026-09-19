@@ -4,19 +4,19 @@
     <div class="budget-summary">
       <div class="budget-item">
         <span class="item-label">本月目标</span>
-        <span class="item-value">¥{{ totalTarget.toFixed(2) }}</span>
+        <span class="item-value">¥{{ formatMoney(totalTarget) }}</span>
       </div>
       <div class="budget-item">
         <span class="item-label">已分配</span>
-        <span class="item-value accent">¥{{ totalReceived.toFixed(2) }}</span>
+        <span class="item-value accent">¥{{ formatMoney(totalReceived) }}</span>
       </div>
       <div class="budget-item">
         <span class="item-label">已花费</span>
-        <span class="item-value spent">¥{{ totalSpent.toFixed(2) }}</span>
+        <span class="item-value spent">¥{{ formatMoney(totalSpent) }}</span>
       </div>
       <div class="budget-item">
         <span class="item-label">剩余可用</span>
-        <span class="item-value remaining" :style="{ color: remainingColor }">¥{{ remaining.toFixed(2) }}</span>
+        <span class="item-value remaining" :style="{ color: remainingColor }">¥{{ formatMoney(remaining) }}</span>
       </div>
     </div>
 
@@ -38,6 +38,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { formatMoney, roundMoney } from '../utils/format'
 
 const props = defineProps({
   totalTarget: { type: Number, default: 0 },
@@ -47,7 +48,7 @@ const props = defineProps({
 
 // 剩余可用金额 = 本月目标 - 已花费
 const remaining = computed(() => {
-  return props.totalTarget - props.totalSpent
+  return roundMoney(props.totalTarget - props.totalSpent)
 })
 
 // 使用率 = 已花费 / 本月目标

@@ -7,7 +7,7 @@
       <div class="group-info">
         <h3 class="group-name">{{ group.name }}</h3>
         <p class="group-stats">
-          {{ subCategoriesCount }} 个分类 · ¥{{ displayBudget.toFixed(2) }} 预算
+          {{ subCategoriesCount }} 个分类 · ¥{{ formatMoney(displayBudget) }} 预算
         </p>
       </div>
     </div>
@@ -23,9 +23,9 @@
         />
       </div>
       <div class="progress-text">
-        <span class="spent-amount">¥{{ totalSpent.toFixed(2) }}</span>
+        <span class="spent-amount">¥{{ formatMoney(totalSpent) }}</span>
         <span class="separator">/</span>
-        <span class="budget-amount">¥{{ displayBudget.toFixed(2) }}</span>
+        <span class="budget-amount">¥{{ formatMoney(displayBudget) }}</span>
       </div>
     </div>
 
@@ -51,6 +51,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { formatMoney } from '../utils/format'
 
 const props = defineProps({
   group: {

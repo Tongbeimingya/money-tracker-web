@@ -46,7 +46,7 @@
       >
         <span class="legend-color" :style="{ background: item.color }"></span>
         <span class="legend-label">{{ item.label }}</span>
-        <span class="legend-value">¥{{ item.value }}</span>
+        <span class="legend-value">¥{{ formatMoney(item.value) }}</span>
         <span class="legend-percentage">{{ item.percentage }}%</span>
       </div>
     </div>
@@ -55,6 +55,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { formatMoney } from '../utils/format'
 
 const props = defineProps({
   data: {

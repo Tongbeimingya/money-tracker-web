@@ -98,7 +98,7 @@
         </div>
         <div class="setting-action">
           <button class="setting-btn" @click="openBudgetDialog">
-            ¥{{ currentPeriod?.totalTarget || 0 }}
+            ¥{{ formatMoney(currentPeriod?.totalTarget || 0) }}
           </button>
         </div>
       </div>
@@ -263,20 +263,20 @@
           <div class="summary-stats">
             <div class="summary-stat-item">
               <span class="stat-label">预算目标</span>
-              <span class="stat-value">¥{{ periodSummary.totalTarget }}</span>
+              <span class="stat-value">¥{{ formatMoney(periodSummary.totalTarget) }}</span>
             </div>
             <div class="summary-stat-item">
               <span class="stat-label">已分配</span>
-              <span class="stat-value income">¥{{ periodSummary.totalReceived }}</span>
+              <span class="stat-value income">¥{{ formatMoney(periodSummary.totalReceived) }}</span>
             </div>
             <div class="summary-stat-item">
               <span class="stat-label">总支出</span>
-              <span class="stat-value expense">¥{{ periodSummary.totalExpense }}</span>
+              <span class="stat-value expense">¥{{ formatMoney(periodSummary.totalExpense) }}</span>
             </div>
             <div class="summary-stat-item">
               <span class="stat-label">剩余</span>
               <span class="stat-value" :class="{ positive: periodSummary.remaining >= 0, negative: periodSummary.remaining < 0 }">
-                ¥{{ periodSummary.remaining }}
+                ¥{{ formatMoney(periodSummary.remaining) }}
               </span>
             </div>
           </div>
@@ -284,7 +284,7 @@
           <div class="summary-metrics">
             <div class="metric-card">
               <span class="metric-label">日均支出</span>
-              <span class="metric-value">¥{{ periodSummary.dailyAverage }}</span>
+              <span class="metric-value">¥{{ formatMoney(periodSummary.dailyAverage) }}</span>
             </div>
             <div class="metric-card">
               <span class="metric-label">预算使用率</span>
@@ -300,7 +300,7 @@
             <span class="highlight-icon">🏆</span>
             <span class="highlight-text">
               最大支出分类：<strong>{{ periodSummary.topCategory.name }}</strong>
-              ¥{{ periodSummary.topCategory.amount }}
+              ¥{{ formatMoney(periodSummary.topCategory.amount) }}
             </span>
           </div>
 
@@ -315,7 +315,7 @@
                 <span class="stat-rank">{{ index + 1 }}</span>
                 <span class="stat-icon">{{ stat.icon }}</span>
                 <span class="stat-name">{{ stat.name }}</span>
-                <span class="stat-amount">¥{{ stat.amount }}</span>
+                <span class="stat-amount">¥{{ formatMoney(stat.amount) }}</span>
               </div>
             </div>
           </div>
@@ -332,6 +332,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useStorage } from '../composables/useStorage'
+import { formatMoney } from '../utils/format'
 
 const {
   currentPeriod,

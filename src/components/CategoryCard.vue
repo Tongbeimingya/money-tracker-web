@@ -6,7 +6,7 @@
       </div>
       <div class="category-info">
         <h3 class="category-name">{{ name }}</h3>
-        <p class="budget-text">预算 ¥{{ budget }}</p>
+        <p class="budget-text">预算 ¥{{ formatMoney(budget) }}</p>
       </div>
     </div>
     <div class="card-body">
@@ -39,6 +39,7 @@
 
 <script setup>
 import BudgetProgress from './BudgetProgress.vue'
+import { formatMoney } from '../utils/format'
 
 defineProps({
   icon: {

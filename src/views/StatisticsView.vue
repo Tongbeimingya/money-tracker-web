@@ -22,19 +22,19 @@
       <div class="overview-grid">
         <div class="overview-item">
           <span class="overview-label">本月目标</span>
-          <span class="overview-value income">¥{{ currentBudget?.totalTarget || 0 }}</span>
+          <span class="overview-value income">¥{{ formatMoney(currentBudget?.totalTarget || 0) }}</span>
         </div>
         <div class="overview-item">
           <span class="overview-label">已分配</span>
-          <span class="overview-value">¥{{ totalAllocated }}</span>
+          <span class="overview-value">¥{{ formatMoney(totalAllocated) }}</span>
         </div>
         <div class="overview-item">
           <span class="overview-label">已花费</span>
-          <span class="overview-value expense">¥{{ totalSpent }}</span>
+          <span class="overview-value expense">¥{{ formatMoney(totalSpent) }}</span>
         </div>
         <div class="overview-item">
           <span class="overview-label">剩余可用</span>
-          <span class="overview-value remaining">¥{{ remaining }}</span>
+          <span class="overview-value remaining">¥{{ formatMoney(remaining) }}</span>
         </div>
       </div>
     </div>
@@ -77,7 +77,7 @@
               <span class="expand-icon">{{ expandedGroups.has(group.id) ? '▼' : '▶' }}</span>
             </div>
             <div class="group-stat-amounts">
-              <span class="group-stat-spent">¥{{ getGroupTotalSpent(group.id) }}</span>
+              <span class="group-stat-spent">¥{{ formatMoney(getGroupTotalSpent(group.id)) }}</span>
               <span class="group-stat-percentage">{{ getGroupPercentage(group.id) }}%</span>
             </div>
           </div>
@@ -103,7 +103,7 @@
               </span>
               <span class="stat-name-simple">{{ stat.category.name }}</span>
               <div class="stat-amounts-simple">
-                <span class="stat-spent-simple">¥{{ stat.spent }}</span>
+                <span class="stat-spent-simple">¥{{ formatMoney(stat.spent) }}</span>
                 <span class="stat-percentage-simple">{{ stat.percentage }}%</span>
               </div>
             </div>
@@ -125,7 +125,7 @@
             </span>
             <span class="stat-name-simple">{{ stat.category.name }}</span>
             <div class="stat-amounts-simple">
-              <span class="stat-spent-simple">¥{{ stat.spent }}</span>
+              <span class="stat-spent-simple">¥{{ formatMoney(stat.spent) }}</span>
               <span class="stat-percentage-simple">{{ stat.percentage }}%</span>
             </div>
           </div>
@@ -135,7 +135,12 @@
 
     <!-- 最近支出记录 -->
     <div v-if="currentExpenses.length > 0" class="recent-records-card">
-      <h3>最近支出</h3>
+      <div class="records-header">
+        <h3>最近支出</h3>
+        <button class="view-all-btn" @click="showAllRecords = true">
+          查看全部记录（{{ currentExpenses.length }}）
+        </button>
+      </div>
       <div class="records-list">
         <div
           v-for="expense in recentExpenses"
@@ -152,7 +157,7 @@
               <span class="record-date">{{ formatDate(expense.date) }}</span>
             </div>
           </div>
-          <span class="record-amount">-¥{{ expense.amount }}</span>
+          <span class="record-amount">-¥{{ formatMoney(expense.amount) }}</span>
         </div>
       </div>
     </div>
@@ -183,20 +188,20 @@
           <div class="summary-stats">
             <div class="summary-stat-item">
               <span class="stat-label">预算目标</span>
-              <span class="stat-value">¥{{ currentPeriod.summary.totalTarget }}</span>
+              <span class="stat-value">¥{{ formatMoney(currentPeriod.summary.totalTarget) }}</span>
             </div>
             <div class="summary-stat-item">
               <span class="stat-label">已分配</span>
-              <span class="stat-value income">¥{{ currentPeriod.summary.totalReceived }}</span>
+              <span class="stat-value income">¥{{ formatMoney(currentPeriod.summary.totalReceived) }}</span>
             </div>
             <div class="summary-stat-item">
               <span class="stat-label">总支出</span>
-              <span class="stat-value expense">¥{{ currentPeriod.summary.totalExpense }}</span>
+              <span class="stat-value expense">¥{{ formatMoney(currentPeriod.summary.totalExpense) }}</span>
             </div>
             <div class="summary-stat-item">
               <span class="stat-label">剩余</span>
               <span class="stat-value" :class="{ positive: currentPeriod.summary.remaining >= 0, negative: currentPeriod.summary.remaining < 0 }">
-                ¥{{ currentPeriod.summary.remaining }}
+                ¥{{ formatMoney(currentPeriod.summary.remaining) }}
               </span>
             </div>
           </div>
@@ -204,7 +209,7 @@
           <div class="summary-metrics">
             <div class="metric-card">
               <span class="metric-label">日均支出</span>
-              <span class="metric-value">¥{{ currentPeriod.summary.dailyAverage }}</span>
+              <span class="metric-value">¥{{ formatMoney(currentPeriod.summary.dailyAverage) }}</span>
             </div>
             <div class="metric-card">
               <span class="metric-label">预算使用率</span>
@@ -220,7 +225,7 @@
             <span class="highlight-icon">🏆</span>
             <span class="highlight-text">
               最大支出分类：<strong>{{ currentPeriod.summary.topCategory.name }}</strong>
-              ¥{{ currentPeriod.summary.topCategory.amount }}
+              ¥{{ formatMoney(currentPeriod.summary.topCategory.amount) }}
             </span>
           </div>
 
@@ -235,13 +240,59 @@
                 <span class="stat-rank">{{ index + 1 }}</span>
                 <span class="stat-icon">{{ stat.icon }}</span>
                 <span class="stat-name">{{ stat.name }}</span>
-                <span class="stat-amount">¥{{ stat.amount }}</span>
+                <span class="stat-amount">¥{{ formatMoney(stat.amount) }}</span>
               </div>
             </div>
           </div>
 
           <div class="modal-actions">
             <button class="confirm-btn" @click="showPeriodSummary = false">关闭</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- 全部记账记录对话框 -->
+    <Teleport to="body">
+      <div v-if="showAllRecords" class="modal-overlay" @click="showAllRecords = false">
+        <div class="modal-content large" @click.stop>
+          <h3>全部记账记录</h3>
+          <p class="records-modal-sub">
+            {{ currentPeriod?.name || currentYearMonth }} · 共 {{ currentExpenses.length }} 笔 · 合计
+            ¥{{ formatMoney(totalSpent) }}
+          </p>
+
+          <div v-if="expensesByDay.length > 0" class="all-records-list">
+            <div v-for="group in expensesByDay" :key="group.key" class="day-group">
+              <div class="day-group-header">
+                <span class="day-group-date">{{ group.label }}</span>
+                <span class="day-group-total">-¥{{ formatMoney(group.total) }}</span>
+              </div>
+
+              <div
+                v-for="expense in group.items"
+                :key="expense.id"
+                class="record-item"
+              >
+                <div class="record-left">
+                  <span class="record-icon" :style="{ background: getCategoryById(expense.categoryId)?.color }">
+                    {{ getCategoryById(expense.categoryId)?.icon }}
+                  </span>
+                  <div class="record-info">
+                    <span class="record-category">{{ getCategoryById(expense.categoryId)?.name }}</span>
+                    <span class="record-note" v-if="expense.note">{{ expense.note }}</span>
+                    <span class="record-date">{{ formatTime(expense.date) }}</span>
+                  </div>
+                </div>
+                <span class="record-amount">-¥{{ formatMoney(expense.amount) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="records-empty">这个周期还没有记账记录</div>
+
+          <div class="modal-actions">
+            <button class="confirm-btn" @click="showAllRecords = false">关闭</button>
           </div>
         </div>
       </div>
@@ -256,6 +307,7 @@ import BudgetProgress from '../components/BudgetProgress.vue'
 import EmptyState from '../components/EmptyState.vue'
 import DonutChart from '../components/DonutChart.vue'
 import BarChart from '../components/BarChart.vue'
+import { formatMoney, roundMoney } from '../utils/format'
 
 const {
   currentYearMonth,
@@ -279,6 +331,9 @@ const expandedGroups = ref(new Set())
 // 显示周期总结
 const showPeriodSummary = ref(false)
 
+// 显示全部记账记录
+const showAllRecords = ref(false)
+
 // 时间范围选择
 const chartTimeRange = ref('day')
 const timeRanges = [
@@ -291,7 +346,7 @@ const timeRanges = [
 // 剩余金额 = 本月目标 - 已花费
 const remaining = computed(() => {
   if (!currentBudget.value) return 0
-  return (currentBudget.value.totalTarget || 0) - totalSpent.value
+  return roundMoney((currentBudget.value.totalTarget || 0) - totalSpent.value)
 })
 
 // 使用率 = 已花费 / 本月目标
@@ -384,6 +439,45 @@ const formatDate = (timestamp) => {
 
   return `${month}月${day}日 ${hours}:${minutes}`
 }
+
+// 只保留时间，用在按天分组的全部记录里（日期已经在分组标题上了）
+const formatTime = (timestamp) => {
+  const date = new Date(timestamp)
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${hours}:${minutes}`
+}
+
+const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+
+// 分组标题：9月19日 周六
+const formatDayLabel = (timestamp) => {
+  const date = new Date(timestamp)
+  return `${date.getMonth() + 1}月${date.getDate()}日 ${WEEKDAYS[date.getDay()]}`
+}
+
+// 全部记录按天分组（currentExpenses 本身已按时间倒序）
+const expensesByDay = computed(() => {
+  const groups = []
+  const index = new Map()
+
+  currentExpenses.value.forEach(expense => {
+    const date = new Date(expense.date)
+    const key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
+
+    let group = index.get(key)
+    if (!group) {
+      group = { key, label: formatDayLabel(expense.date), total: 0, items: [] }
+      index.set(key, group)
+      groups.push(group)
+    }
+
+    group.total += expense.amount
+    group.items.push(expense)
+  })
+
+  return groups
+})
 
 // 环形图数据：分类占比
 const chartData = computed(() => {
@@ -1006,12 +1100,35 @@ onMounted(async () => {
   box-shadow: var(--shadow-light);
 }
 
+.records-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
 .recent-records-card h3 {
   font-size: 17px;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: var(--spacing-md);
   letter-spacing: -0.3px;
+  margin: 0;
+}
+
+.view-all-btn {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-blue);
+  background: rgba(0, 122, 255, 0.1);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.view-all-btn:hover {
+  background: rgba(0, 122, 255, 0.18);
 }
 
 .records-list {
@@ -1079,6 +1196,59 @@ onMounted(async () => {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.3px;
+}
+
+/* 全部记账记录对话框 */
+.records-modal-sub {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin: calc(var(--spacing-md) * -1 + 4px) 0 var(--spacing-md) 0;
+}
+
+.all-records-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  max-height: 58vh;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.day-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.day-group-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px var(--spacing-xs);
+  background: #FFFFFF;
+}
+
+.day-group-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.day-group-total {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.records-empty {
+  padding: var(--spacing-xl) 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-tertiary);
 }
 
 /* 模态框样式 */
