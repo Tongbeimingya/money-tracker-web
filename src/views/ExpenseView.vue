@@ -64,6 +64,33 @@
         />
       </div>
 
+      <!-- 日期选择 -->
+      <div class="date-section">
+        <div class="date-header">
+          <span class="date-label">日期</span>
+          <div class="quick-row">
+            <button
+              class="quick-btn"
+              :class="{ active: expenseDate === today }"
+              @click="expenseDate = today"
+            >
+              今天
+            </button>
+            <button
+              class="quick-btn"
+              :class="{ active: expenseDate === yesterday }"
+              @click="expenseDate = yesterday"
+            >
+              昨天
+            </button>
+          </div>
+        </div>
+        <input v-model="expenseDate" type="date" :max="today" class="date-input" />
+        <p v-if="expenseDate !== today" class="date-hint">
+          补记 {{ dateLabel }} 的账，时间会记为当前时刻
+        </p>
+      </div>
+
       <!-- 确认按钮 -->
       <button
         class="confirm-btn"
@@ -93,11 +120,20 @@
           </div>
           <div class="expense-amount-wrapper">
             <span class="expense-amount">¥{{ formatMoney(expense.amount) }}</span>
+            <button class="edit-btn" @click="openEdit(expense)">✏️</button>
             <button class="delete-btn" @click="handleDelete(expense.id)">🗑️</button>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- 编辑记录弹窗 -->
+    <ExpenseEditDialog
+      :expense="editingExpense"
+      :category="editingExpense && getCategoryById(editingExpense.categoryId)"
+      @close="editingExpense = null"
+      @save="handleEditSave"
+    />
   </div>
 </template>
 
@@ -105,7 +141,13 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useStorage } from '../composables/useStorage'
 import EmptyState from '../components/EmptyState.vue'
+import ExpenseEditDialog from '../components/ExpenseEditDialog.vue'
 import { formatMoney } from '../utils/format'
+import {
+  offsetDayValue,
+  dateValueToTimestamp,
+  formatDayWithWeekday
+} from '../utils/date'
 
 const props = defineProps({
   selectedCategoryId: {
@@ -119,12 +161,25 @@ const {
   currentExpenses,
   loadData,
   addExpense,
+  updateExpense,
   deleteExpense
 } = useStorage()
 
 const selectedCategory = ref(null)
 const amount = ref('')
 const note = ref('')
+
+// 记账日期，默认今天
+const today = offsetDayValue(0)
+const yesterday = offsetDayValue(1)
+const expenseDate = ref(today)
+
+// 正在编辑的记录
+const editingExpense = ref(null)
+
+const dateLabel = computed(() => {
+  return formatDayWithWeekday(dateValueToTimestamp(expenseDate.value, Date.now()))
+})
 
 // 显示金额
 const displayAmount = computed(() => {
@@ -169,14 +224,35 @@ const confirmExpense = () => {
   const numAmount = parseFloat(amount.value)
   if (isNaN(numAmount) || numAmount <= 0) return
 
-  addExpense(selectedCategory.value.id, numAmount, note.value)
+  // 补记过去的日期时，时分秒沿用当前时刻
+  const isToday = expenseDate.value === today
+  const label = dateLabel.value
+  const date = dateValueToTimestamp(expenseDate.value, Date.now())
+
+  addExpense(selectedCategory.value.id, numAmount, note.value, date)
 
   // 重置表单
   amount.value = ''
   note.value = ''
+  expenseDate.value = today
 
-  // 显示成功提示
-  alert('记账成功！💰')
+  alert(isToday ? '记账成功！💰' : `已补记到 ${label} 💰`)
+}
+
+// 打开编辑弹窗
+const openEdit = (expense) => {
+  editingExpense.value = expense
+}
+
+// 保存编辑
+const handleEditSave = ({ amount: newAmount, note: newNote, date }) => {
+  if (!editingExpense.value) return
+  updateExpense(editingExpense.value.id, {
+    amount: newAmount,
+    note: newNote,
+    date
+  })
+  editingExpense.value = null
 }
 
 // 删除记录
@@ -186,15 +262,22 @@ const handleDelete = (expenseId) => {
   }
 }
 
-// 格式化时间
+// 格式化时间：同一天显示相对时间或时刻，跨天显示日期
 const formatTime = (timestamp) => {
   const date = new Date(timestamp)
   const now = new Date()
   const diff = now - date
 
-  if (diff < 60000) return '刚刚'
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
+  const sameDay =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+
+  if (sameDay && diff >= 0) {
+    if (diff < 60000) return '刚刚'
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
+    return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+  }
 
   return `${date.getMonth() + 1}/${date.getDate()}`
 }
@@ -375,6 +458,70 @@ watch(() => props.selectedCategoryId, (newId) => {
   box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
 }
 
+.date-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.date-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+}
+
+.date-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.quick-row {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.quick-btn {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-sm);
+}
+
+.quick-btn.active {
+  color: var(--accent-blue);
+  border-color: var(--accent-blue);
+  background: rgba(0, 122, 255, 0.1);
+}
+
+.date-input {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-md);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.date-input:focus {
+  border-color: var(--accent-blue);
+  background: var(--bg-secondary);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.date-hint {
+  margin-top: var(--spacing-xs);
+  font-size: 12px;
+  color: var(--accent-blue);
+}
+
 .confirm-btn {
   width: 100%;
   padding: var(--spacing-md);
@@ -476,6 +623,7 @@ watch(() => props.selectedCategoryId, (newId) => {
   color: var(--text-primary);
 }
 
+.edit-btn,
 .delete-btn {
   background: transparent;
   font-size: 18px;
@@ -484,6 +632,7 @@ watch(() => props.selectedCategoryId, (newId) => {
   transition: opacity 0.3s ease;
 }
 
+.edit-btn:hover,
 .delete-btn:hover {
   opacity: 1;
 }

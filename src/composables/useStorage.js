@@ -558,15 +558,15 @@ export function useStorage() {
 
   // ===== 支出管理 =====
 
-  // 添加支出记录
-  const addExpense = (categoryId, amount, note = '') => {
+  // 添加支出记录（date 不传就是现在，传了就按指定时间记）
+  const addExpense = (categoryId, amount, note = '', date = Date.now()) => {
     if (!data.value) return
     const expense = {
       id: generateId(),
       categoryId,
       amount,
       note,
-      date: Date.now()
+      date
     }
     data.value.expenseRecords.push(expense)
     saveData()
@@ -574,12 +574,13 @@ export function useStorage() {
   }
 
   // 编辑支出记录
-  const updateExpense = (expenseId, { amount, note }) => {
+  const updateExpense = (expenseId, { amount, note, date }) => {
     if (!data.value) return
     const expense = data.value.expenseRecords.find(e => e.id === expenseId)
     if (expense) {
       if (amount !== undefined) expense.amount = amount
       if (note !== undefined) expense.note = note
+      if (date !== undefined) expense.date = date
       saveData()
       return expense
     }

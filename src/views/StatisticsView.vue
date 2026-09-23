@@ -157,7 +157,10 @@
               <span class="record-date">{{ formatDate(expense.date) }}</span>
             </div>
           </div>
-          <span class="record-amount">-¥{{ formatMoney(expense.amount) }}</span>
+          <div class="record-right">
+            <span class="record-amount">-¥{{ formatMoney(expense.amount) }}</span>
+            <button class="record-edit-btn" @click="openEdit(expense)">✏️</button>
+          </div>
         </div>
       </div>
     </div>
@@ -284,7 +287,10 @@
                     <span class="record-date">{{ formatTime(expense.date) }}</span>
                   </div>
                 </div>
-                <span class="record-amount">-¥{{ formatMoney(expense.amount) }}</span>
+                <div class="record-right">
+                  <span class="record-amount">-¥{{ formatMoney(expense.amount) }}</span>
+                  <button class="record-edit-btn" @click="openEdit(expense, true)">✏️</button>
+                </div>
               </div>
             </div>
           </div>
@@ -297,6 +303,14 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- 编辑记录弹窗 -->
+    <ExpenseEditDialog
+      :expense="editingExpense"
+      :category="editingExpense && getCategoryById(editingExpense.categoryId)"
+      @close="closeEdit"
+      @save="handleEditSave"
+    />
   </div>
 </template>
 
@@ -307,6 +321,7 @@ import BudgetProgress from '../components/BudgetProgress.vue'
 import EmptyState from '../components/EmptyState.vue'
 import DonutChart from '../components/DonutChart.vue'
 import BarChart from '../components/BarChart.vue'
+import ExpenseEditDialog from '../components/ExpenseEditDialog.vue'
 import { formatMoney, roundMoney } from '../utils/format'
 
 const {
@@ -322,7 +337,8 @@ const {
   getCategorySpent,
   getCategoriesByGroup,
   getGroupTotalBudget,
-  getGroupTotalSpent
+  getGroupTotalSpent,
+  updateExpense
 } = useStorage()
 
 // 展开的大分类
@@ -333,6 +349,35 @@ const showPeriodSummary = ref(false)
 
 // 显示全部记账记录
 const showAllRecords = ref(false)
+
+// 正在编辑的记录
+const editingExpense = ref(null)
+// 记一下编辑是不是从"全部记录"弹窗点进来的，存完自动退回去
+const reopenAfterEdit = ref(false)
+
+const openEdit = (expense, fromAllRecords = false) => {
+  if (fromAllRecords) showAllRecords.value = false
+  reopenAfterEdit.value = fromAllRecords
+  editingExpense.value = expense
+}
+
+const closeEdit = () => {
+  editingExpense.value = null
+  if (reopenAfterEdit.value) {
+    reopenAfterEdit.value = false
+    showAllRecords.value = true
+  }
+}
+
+const handleEditSave = ({ amount: newAmount, note: newNote, date }) => {
+  if (!editingExpense.value) return
+  updateExpense(editingExpense.value.id, {
+    amount: newAmount,
+    note: newNote,
+    date
+  })
+  closeEdit()
+}
 
 // 时间范围选择
 const chartTimeRange = ref('day')
@@ -1189,6 +1234,13 @@ onMounted(async () => {
   color: var(--text-tertiary);
 }
 
+.record-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
+}
+
 .record-amount {
   font-size: 17px;
   font-weight: 600;
@@ -1196,6 +1248,18 @@ onMounted(async () => {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.3px;
+}
+
+.record-edit-btn {
+  background: transparent;
+  font-size: 16px;
+  padding: var(--spacing-xs);
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.record-edit-btn:hover {
+  opacity: 1;
 }
 
 /* 全部记账记录对话框 */
